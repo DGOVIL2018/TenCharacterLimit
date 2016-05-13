@@ -54,9 +54,78 @@ def is_valid(g, n):
         return True
 
 
-#def AI():
-#    if currentPlayer ==
-##### Main Program Here #####
+def check_Winning_Move(current_Board,move_Symbol):
+    '''This function checks for an immediate winning move for the computer, and makes that move if it exists. If not, then it returns the existing board.
+    This function also returns a boolean status noting if such a move was found.'''
+    for i in range(1,10):
+        x,y = n_to_xy(i)
+        if current_Board[x,y] == " ":
+            current_Board[x,y] = move_Symbol
+            if is_win(current_Board):
+                return True,current_Board
+            else:
+                current_Board[x,y] = " "
+                
+    return False,current_Board
+    
+def check_Blocking_Move(current_Board,move_Symbol):
+    '''This function checks if the opponent has an immediate winning move, if not blocked. Used in AI(computer) mode in the AI_Move function'''
+
+    if move_Symbol == "X":
+        opponent_Symbol = "O"
+    else:
+        opponent_Symbol = "X"    
+
+    for i in range(1,10): 
+        x,y = n_to_xy(i)
+        if current_Board[x,y] == " ":
+            current_Board[x,y] = opponent_Symbol #put opponent symbol in the blank spot 
+            if is_win(current_Board): #check if that makes the opponent win
+                current_Board[x,y] = move_Symbol #if so, then move your symbol there
+                return True,current_Board
+            else:
+                current_Board[x,y] = " " #if not a winning move for opponent, then reset that location to blank/open
+                
+    return False,current_Board
+
+
+def AI_Move(currentBoard,symbol):
+    '''This function looks for the best next move and returns the board after making that move'''
+    
+    win, newBoard = check_Winning_Move(currentBoard,symbol)
+    if win: #check if an immediately winning move was found
+        return newBoard
+
+    block, newBoard = check_Blocking_Move(currentBoard,symbol)
+    if block:
+        return newBoard
+       
+
+    if currentBoard[1,1] == " ":
+        move(currentBoard,symbol,5)
+        return newBoard
+    
+    if currentBoard[0,0] == " ":
+        return move(currentBoard,symbol,1)
+    if currentBoard[0,2] == " ":
+        return move(currentBoard,symbol,3)
+    if currentBoard[2,0] == " ":
+        return move(currentBoard,symbol,7)
+    if currentBoard[2,2] == " ":
+        return move(currentBoard,symbol,9)
+
+    if currentBoard[0,1] == " ":
+        return move(currentBoard,symbol,2)
+    if currentBoard[1,0] == " ":
+        return move(currentBoard,symbol,4)
+    if currentBoard[1,2] == " ":
+        return move(currentBoard,symbol,6)
+    if currentBoard[2,1] == " ":
+        return move(currentBoard,symbol,8)
+    
+ 
+
+### Main Program Here #####
 
 board = { (i,j):" " for i in range(3) for j in range(3) }
 
@@ -72,24 +141,48 @@ draw_board(board)
 print("Enter your moves using the numbers shown above to choose the corresponding location on the board.\n\n")
 
 
-# Get user names, symbols, and first mover
+# Get mode, user names, symbols, and first mover
 
-P1 = input("Enter the name of Player1: ")
-P2 = input("Enter the name of Player2: ")
-P1S = input("Enter Player1's symbol (X or O): ")
-P1S = P1S.upper()
-if P1S == "X":
-    P2S = "O"
+mode = input("Do you want to play against the computer? Y/N: ")
+mode = mode.upper()
+
+if mode == "Y": 
+    
+    P1 = input("Enter your name: ")
+    P1S = input("Enter your symbol choice (X or O): ")
+    Order = input("Will you move first? Y/N :")
+
+    P2 = "Computer"
+    P1S = P1S.upper()
+    if P1S == "X":
+        P2S = "O"
+    else:
+        P2S = "X"
+
+    Order = Order.upper()
+    if Order  == "N":
+        temp = P1
+        P1 = P2
+        P2 = temp
+
 else:
-    P2S = "X"
+    
+    P1 = input("Enter the name of Player1: ")
+    P2 = input("Enter the name of Player2: ")
+    P1S = input("Enter Player1's symbol (X or O): ")
+    P1S = P1S.upper()
+    if P1S == "X":
+        P2S = "O"
+    else:
+        P2S = "X"
 
-Order = input("Will Player1 move first? Y/N :")
-Order = Order.upper()
+    Order = input("Will Player1 move first? Y/N :")
+    Order = Order.upper()
 
-if Order  == "N":
-    temp = P1
-    P1 = P2
-    P2 = temp
+    if Order  == "N":
+        temp = P1
+        P1 = P2
+        P2 = temp
 
 
 # Initialize board
@@ -109,21 +202,38 @@ for i in range(9):
         currentPlayer = P1
         currentSymbol = P1S    
 
-    valid = False
-    while not valid:
-        print(currentPlayer, ", enter your move (1-9): ", end="")
-        boardLocation = int(input()) #How to use variable in input prompt?
-        if is_valid(board, boardLocation):
-            board = move(board, currentSymbol, boardLocation)
-            valid = True
-    
+    if mode == "Y": #this section is for playing against the computer
+        
+        if currentPlayer != "Computer":
+            valid = False
+            while not valid:
+                    print(currentPlayer, ", enter your move (1-9): ", end="")
+                    boardLocation = int(input()) #How to use variable in input prompt?
+                    print()
+                    if is_valid(board, boardLocation):
+                        board = move(board, currentSymbol, boardLocation)
+                        valid = True
+        else: #this is when it is the computer's turn
+            print("Here is the Computer's move:\n")
+            board = AI_Move(board, currentSymbol)
+    else: #this section is for playing against another player
+        valid = False
+        while not valid:
+            print(currentPlayer, ", enter your move (1-9): ", end="")
+            boardLocation = int(input()) #How to use variable in input prompt?
+            print()
+            if is_valid(board, boardLocation):
+                board = move(board, currentSymbol, boardLocation)
+                valid = True        
 
+       
     if is_win(board):
         print("Congratulations", currentPlayer, ". You have won!")
         draw_board(board)
         break
 
-if not is_win:
+if not is_win(board):
+    draw_board(board)
     print("The game is a tie!")
     
     
@@ -131,10 +241,17 @@ if not is_win:
 
 
 #Documentation
-#I used five different functions to simplify my code and therefore did not repeat code
+#I used eight different functions to simplify my code and therefore did not repeat code
 #I found it challenging to code the part determining which player goes first, because it required the use of many variables
 #I was confused on the part why initializing the playing board with three rows and three columns did not let me reference the 2D list by using list[x][y].
 #I found it interesting that you can use multiple print statements to print a board without using fancy printing techniques
-#I tried to make the game more user-friendly, so I asked the players their names so that the game would be more enjoyable for them
+#I tried to make the game more user-friendly, so I asked the players their names and game-mode so that the game would be more enjoyable for them
+#The AI function was complicated to define. I had to think through the sequence of checks that would make it smart. The order of priority was:
+    #1: Make an immediate winning move if available
+    #2: Block the opponent's immediate winning move, if possible
+    #3: Play the center, as it controls four different lines (if possible)
+    #4: Next, play the corners, as they control three different lines (if possible)
+    #5: Lastly, play the sides, as they have the least value outside of the previous four (if possible)
+    
 
 
